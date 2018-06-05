@@ -24,6 +24,7 @@
     "cntk-fastercnn": "^0.1.2",
     "electron": "^1.4.1",
     "electron-window-state": "^4.0.2",
+    "ndjson": "^1.5.0",
     "remote": "^0.2.6",
     "replace": "^0.3.0"
   }
