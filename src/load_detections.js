@@ -34,7 +34,7 @@ function promisfiedReadStream(path) {
       const detectionStream = fs.createReadStream(`${path}.json`).pipe(ndjson.parse());
       detectionStream.on('data', function(obj) {
         config.frames[Math.trunc(obj.frame_num)] = config.frames[Math.trunc(obj.frame_num)] || [];
-        config.frames[Math.trunc(obj.frame_num)].push(convertToVottFormat(obj, config.frames[Math.trunc(obj.frame_num)].length));
+        config.frames[Math.trunc(obj.frame_num)].push(convertToVottFormat(obj));
         config.inputTags.add(obj.labels);
       });
       detectionStream.on('end', () => {
@@ -51,7 +51,7 @@ function promisfiedReadStream(path) {
   });
 }
 
-function convertToVottFormat(detection, index) {
+function convertToVottFormat(detection) {
   return {
     "x1": Math.floor(detection.tl_x * defaultWidth),
     "y1": Math.floor(detection.tl_y * defaultHeight),
@@ -62,7 +62,7 @@ function convertToVottFormat(detection, index) {
     "height": 600,
     "type": "Rectangle",
     "tags": [detection.labels],
-    "name": index,
+    "name": Math.trunc(detection.det_id),
   }
 }
 
