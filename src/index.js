@@ -298,17 +298,21 @@ async function openPath(pathName, isDir) {
               videotagging.video.oncanplay = undefined;
           }
           //init region tracking
-          trackingExtension = new VideoTaggingTrackingExtension({
-              videotagging: videotagging, 
+          if ($('#suggestiontype').val() !== 'disable') {
+            trackingExtension = new VideoTaggingTrackingExtension({
+              videotagging: videotagging,
               trackingFrameRate: 15,
               method: $('#suggestiontype').val(),
               enableRegionChangeDetection: document.getElementById("scd").checked,
               enableSceneChangeDetection: document.getElementById("scd").checked,
               saveHandler: save
-          });
-          videotagging.video.oncanplay = updateVisitedFrames; 
-          //track visited frames
-          trackingExtension.startTracking();
+            });
+          }
+          videotagging.video.oncanplay = updateVisitedFrames;
+          if ($('#suggestiontype').val() !== 'disable') {
+            //track visited frames
+            trackingExtension.startTracking();
+          }
         }
 
         //init detection

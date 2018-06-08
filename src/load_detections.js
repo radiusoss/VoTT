@@ -29,6 +29,7 @@ function promisfiedReadStream(path) {
       let config = {
         frames: {},
         inputTags: new Set(),
+        framerate: "30",
       };
       const detectionStream = fs.createReadStream(`${path}.json`).pipe(ndjson.parse());
       detectionStream.on('data', function(obj) {
