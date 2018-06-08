@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const DetectionExtension = require('./lib/videotagging_extensions').Detection;
 const ipcRenderer = require('electron').ipcRenderer;
+const loadDetections = require('./load_detections');
 const testSetSize = .20;
 var trackingEnabled = true;
 var saveState,
@@ -161,7 +162,7 @@ function fileSelected(filepath) {
     openPath(pathName, false);
   } else { // showing system open dialog
     dialog.showOpenDialog({
-      filters: [{ name: 'Videos', extensions: ['mp4','ogg']}],
+      filters: [{ name: 'Videos', extensions: ['mp4','ogg', 'm4v']}],
       properties: ['openFile']
     },
     function (pathName) {
@@ -184,7 +185,7 @@ function folderSelected(folderpath) {
 
 }
 
-function openPath(pathName, isDir) {
+async function openPath(pathName, isDir) {
     // show configuration
     $('#load-message-container').hide();
     $('#video-tagging-container').hide();
@@ -206,7 +207,7 @@ function openPath(pathName, isDir) {
     assetFolder = path.join(path.dirname(pathName), `${path.basename(pathName, path.extname(pathName))}_output`);
     
     try {
-      var config = require(`${pathName}.json`);
+      var config = await loadDetections(pathName);
       saveState = JSON.stringify(config);
       //restore config
       $('#inputtags').val(config.inputTags);

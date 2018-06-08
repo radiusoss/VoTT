@@ -5,13 +5,14 @@ const fs = require('fs');
 const defaultWidth = 800;
 const defaultHeight = 600;
 
-function load_detections(path) {
-  //remove .mp4 extension
-  path = path.slice(-4);
+function loadDetections(path) {
+  console.log('attempting to load detections');
+  //remove .m4v extension
+  path = path.slice(0, -4);
   let config;
   try {
     try {
-      config = require(`${path}.json`);
+      config = require(`${path}.m4v.json`);
     } catch (err) {
       config = readNDJSON(path);
     }
@@ -75,4 +76,4 @@ async function readNDJSON(path) {
   return config;
 }
 
-module.exports = load_detections;
+module.exports = loadDetections;
