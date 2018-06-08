@@ -12,7 +12,7 @@ var saveState,
     videotagging,
     detection,
     trackingExtension,
-    assetFolder; 
+    assetFolder;
 
 $(document).ready(() => {//init confirm keys figure out why this doesn't work
   $('#inputtags').tagsinput({confirmKeys: [13, 32, 44, 45, 46, 59, 188]});
@@ -154,7 +154,7 @@ function checkPointRegion() {
 
 //load logic
 function fileSelected(filepath) {
-   $('#load-message-container').hide();
+  $('#load-message-container').hide();
 
   if (filepath) {  //checking if a video is dropped
     let pathName = filepath.path;

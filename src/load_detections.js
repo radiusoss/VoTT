@@ -1,20 +1,25 @@
 const ndjson = require('ndjson');
 const fs = require('fs');
 
+// Pulled from default width of new window in main.js
+const defaultWidth = 800;
+const defaultHeight = 600;
+
 function load_detections(path) {
-  //remove .ts extension
-  path = path.slice(-3);
+  //remove .mp4 extension
+  path = path.slice(-4);
   let config;
   try {
-    try { config = require(`${path}.json`); }
-    catch { config = readNDJSON(path); }
-  }
-  catch {
+    try {
+      config = require(`${path}.json`);
+    } catch (err) {
+      config = readNDJSON(path);
+    }
+  } catch (err) {
     console.log(`${path} not found`);
     return undefined;
   }
   return config;
-
 }
 
 function promisfiedReadStream(path) {
@@ -26,8 +31,8 @@ function promisfiedReadStream(path) {
       };
       const detectionStream = fs.createReadStream(`${path}.json`).pipe(ndjson.parse());
       detectionStream.on('data', function(obj) {
-        config.frames[obj.frame_num] = config.frames[obj.frame_num] || [];
-        config.frames[obj.frame_num].push(obj);
+        config.frames[Math.trunc(obj.frame_num)] = config.frames[Math.trunc(obj.frame_num)] || [];
+        config.frames[Math.trunc(obj.frame_num)].push(convertToVottFormat(obj, config.frames[Math.trunc(obj.frame_num)].length));
         config.inputTags.add(obj.labels);
       });
       detectionStream.on('end', () => {
@@ -42,6 +47,21 @@ function promisfiedReadStream(path) {
       reject(error);
     }
   });
+}
+
+function convertToVottFormat(detection, index) {
+  return {
+    "x1": Math.floor(detection.tl_x * defaultWidth),
+    "y1": Math.floor(detection.tl_y * defaultHeight),
+    "x2": Math.floor(detection.br_x * defaultWidth),
+    "y2": Math.floor(detection.br_y * defaultHeight),
+    "id": Math.trunc(detection.frame_num),
+    "width": 800,
+    "height": 600,
+    "type": "Rectangle",
+    "tags": [detection.labels],
+    "name": index,
+  }
 }
 
 async function readNDJSON(path) {
