@@ -313,6 +313,12 @@ async function openPath(pathName, isDir) {
             //track visited frames
             trackingExtension.startTracking();
           }
+
+          if ($('#suggestiontype').val() === 'disable') {
+            //auto-save
+            $("#video-tagging").off("stepFwdClicked-BeforeStep");
+            $("#video-tagging").on("stepFwdClicked-BeforeStep", save);
+          }
         }
 
         //init detection
