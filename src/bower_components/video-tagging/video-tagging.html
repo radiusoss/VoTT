@@ -21,9 +21,10 @@
     <div id="controlWrapper" class="controlWrapper">
       <playback-control id="playSpeedControl" class="playSpeedControl"></playback-control>
       <div id='videoWrapper' class="relativeDiv">
-          <div id = "regionLabelDiv" style="width:40px;height:20px;" class="regionLabel" >
-              <span id="regionLabelSpan" class="regionLabelSpan"></span>
-              <span id="closeRegionImage" on-click="deleteRegion" class="closeRegion clickableControl">X</span>
+          <div id = "regionLabelDiv" style="width:40px;height:20px;" class="regionLabel regionTextInput" >
+              <!--<span id="regionLabelSpan" class="regionLabelSpan"></span>-->
+              <input id="regionTextInput" type="text">
+              <!--<span id="closeRegionImage" on-click="deleteRegion" class="closeRegion clickableControl">X</span>-->
           </div>
               <canvas id="overlay"  on-click='videoClicked' class="overlaystyle" width="100" height="100" >
                       Your browser does not support the HTML5 canvas location.
@@ -131,11 +132,13 @@
       this.overlay = this.$$('#overlay');
       this.video= this.$$('#vid');
       this.optionalTags= this.$$('#optionalTags');
-      this.regionLabelDiv = this.$$('#regionLabelDiv');
+      this.regionLabelDiv = this.$$('#regionLabelDiv');  // Todo: Remove, label div should exist for all divs - collision handling ?
       this.regionLabelSpan = this.$$('#regionLabelSpan');
       this.timeSpan = this.$$('#timeSpan');
       this.frameText = this.$$("#frameText");
       this.playbackSpan = this.$$("#playbackSpan");
+      this.regionTextInput = this.$$("#regionTextInput");
+
       // Buttons
       this.playButton = this.$$('#play-pause');
       this.stepfwd = this.$$("#stepfwd");
@@ -209,20 +212,23 @@
                     if (!canMove) return false;
                     canMove = false;
                     setTimeout(function() { canMove = true; }, 100);
-                    switch (e.keyCode) {
+                    if (e.shiftKey) {
+                      switch (e.keyCode) {
                         case 37:  // left
-                        self.stepBwdClicked();
-                        break;
+                          self.stepBwdClicked();
+                          break;
                         case 39: // right
-                        self.stepFwdClicked();
-                        break;
+                          self.stepFwdClicked();
+                          break;
                         case 46: //delete
                         case 8:  //backspace
-                        if($('.regionCanvasSelected')[0]){
+                          if ($('.regionCanvasSelected')[0]) {
                             self.deleteRegion();
-                        }
-                        break;
-                        default: return; // exit this handler for other keys
+                          }
+                          break;
+                        default:
+                          return; // exit this handler for other keys
+                      }
                     }
                     e.preventDefault(); // prevent the default action (scroll / move caret)
                 };
@@ -278,6 +284,11 @@
               this.showAllRegions();
               this.regionSelected(selected_region)
           });
+      this.regionTextInput.addEventListener("keyup", (e) => {
+        if (e.keyCode === 13 && this.regionTextInput === document.activeElement) {
+          this.updateRegionId();
+        }
+      })
     },
 
     snapToAspectRatio: function()
@@ -352,18 +363,6 @@
         }).each(function(idx,e) {
             e.style.zIndex =(idx+200).toString();
         });
-    },
-    positionRegionNameLabel: function(div) {
-        if (div){
-            this.regionLabelDiv.style.left = (div.offsetLeft + parseFloat(div.style.width, 10) - parseFloat(this.regionLabelDiv.style.width, 10)) + "px";
-            this.regionLabelDiv.style.top = (div.offsetTop - parseFloat(this.regionLabelDiv.style.height, 10)) + "px" ;
-            //Out of bounds top - move it below div
-            if(parseFloat(this.regionLabelDiv.style.top) < 0) {
-                this.regionLabelDiv.style.top = (div.offsetTop + parseFloat(div.style.height, 10)) + "px" ;
-            }
-            this.regionLabelSpan.innerHTML = div.id;
-            this.regionLabelDiv.style.display = "block";
-        }
     },
     createRegion: function(x1, y1, x2, y2) {
         var region = this.addRegion(x1, y1, x2, y2);//Add to in-memory collection
@@ -450,18 +449,18 @@
               this.cleanSelectedElements();
               var div = document.getElementById(divId);
               div.classList.add("regionCanvasSelected");
-              this.selectedRegionId = div.id;
+              this.selectedRegionId = divId;
               this.positionRegionNameLabel(div);
               //Tags - display the tags of the region and enable editing
               this.optionalTags.toggleEnableButtons(true);
               this.optionalTags.resetSelected();
               var regions = this.frames[this.getCurrentFrame()];
               if(regions) {
-                  var tags = this.frames[this.getCurrentFrame()][this.selectedRegionId - 1].tags;
+                  var tags = regions.find((detection) => detection.unique_dom_id === divId).tags;
                   this.optionalTags.displaySelectedTags(tags);
               }
              function updateRegionFromDiv(div, xOffset, yOffset){
-                 var region = regions[(divId-1).toString()];
+                 var region = regions.find((detection) => detection.unique_dom_id === divId);
                  region.width = parseFloat(this.overlay.width);//$('#vid').width();
                  region.height = parseFloat(this.overlay.height);//$('#vid').height();
                  region.x1 = parseInt(div.style.left) - ((xOffset) ? xOffset : 0);
@@ -498,15 +497,7 @@
     },
     deleteRegion: function(e) {
           var regions = this.frames[this.getCurrentFrame()];
-          var deletedRegion = regions[this.selectedRegionId - 1];
-          regions.splice(this.selectedRegionId - 1, 1);
-          //Shift array left to cover removed item - Rename all regions which are higher than the deleted one,
-          for (var i=0;i<regions.length;i++) {
-              var id = Number(regions[i].name);
-              if(id > this.selectedRegionId){
-                  regions[i].name = id - 1;
-              }
-          }
+          regions.splice(regions.findIndex((detection) => detection.unique_dom_id === this.selectedRegionId), 1);
           this.showAllRegions();
           this.emitRegionToHost();
     },
@@ -531,9 +522,10 @@
        * @params {x1, y1, x2, y2} region coordinates.
        * @param {regionId} The region id, which is the region index + 1.
        */
-    addDivToRegion: function(x1, y1, x2, y2, regionId, tags) {
+    addDivToRegion: function(x1, y1, x2, y2, regionId, tags, unique_dom_id) {
             var div = document.createElement("div");
-            div.id = regionId;
+            div.id = unique_dom_id;
+            div.setAttribute("data-track-id", regionId);
             div.classList.add("regionCanvas");
             if (tags.length > 0){
                 div.style.borderColor = this.optionalTags.colors[this.inputtagsarray.indexOf(tags[0])];
@@ -559,17 +551,64 @@
                       .click(function(e) {
                          self.regionSelected(div.id);
                       });
-            $( div )
-                      .mouseenter(function(e) {
-                          self.positionRegionNameLabel(this);
-                      })
-                      .mouseleave(function() {
-                        self.regionLabelDiv.style.display = "none";
-                        if(self.selectedRegionId === div.id) {
-                              self.regionLabelDiv.style.display = "block";
-                        }
-                      });
+            // $( div )
+            //           .mouseenter(function(e) {
+            //               self.positionRegionNameLabel(this);
+            //           })
+            //           .mouseleave(function() {
+            //             self.regionLabelDiv.style.display = "none";
+            //             if(self.selectedRegionId === div.id) {
+            //                   self.regionLabelDiv.style.display = "block";
+            //             }
+            //           });
             Polymer.dom(this.$.videoWrapper).appendChild(div);
+            const regionLabel = document.createElement("div");
+            regionLabel.id = `${unique_dom_id}-region-label`;
+            regionLabel.classList.add("regionLabelDiv");
+            const regionLabelSpan = document.createElement("span");
+            regionLabelSpan.innerHTML = regionId;
+            regionLabel.appendChild(regionLabelSpan);
+            Polymer.dom(this.$.videoWrapper).appendChild(regionLabel);
+            this.setRegionNameLabel(div, regionLabel);
+
+    },
+    setRegionNameLabel: function(regionDiv, regionLabelDiv) {
+      if (regionDiv && regionLabelDiv){
+        regionLabelDiv.style.left = (regionDiv.offsetLeft + parseFloat(regionDiv.style.width || '0') - parseFloat(regionLabelDiv.style.width || '20')) + "px";
+        regionLabelDiv.style.top = (regionDiv.offsetTop - parseFloat(regionLabelDiv.style.height || '20')) + "px" ;
+        //Out of bounds top - move it below div
+        if(parseFloat(regionLabelDiv.style.top) <= 0) {
+          regionLabelDiv.style.top = (regionDiv.offsetTop + parseFloat(regionDiv.style.height || '0')) + "px" ;
+        }
+        regionLabelDiv.style.display = "block";
+      }
+    },
+    positionRegionNameLabel: function(div) {  // Todo: Refactor to add label to each div
+      if (div){
+        this.regionLabelDiv.style.left = (div.offsetLeft + parseFloat(div.style.width, 10) - parseFloat(this.regionLabelDiv.style.width, 10)) + "px";
+        this.regionLabelDiv.style.top = (div.offsetTop - parseFloat(this.regionLabelDiv.style.height, 10)) + "px" ;
+        //Out of bounds top - move it below div
+        if(parseFloat(this.regionLabelDiv.style.top) < 0) {
+          this.regionLabelDiv.style.top = (div.offsetTop + parseFloat(div.style.height, 10)) + "px" ;
+        }
+        this.regionTextInput.value = div.getAttribute('data-track-id');
+        this.regionTextInput.focus();
+        this.regionTextInput.select();
+        this.regionLabelDiv.style.display = "inline-block";
+      }
+    },
+    updateRegionId: function() {
+      const inputValue = this.regionTextInput.value;
+      if (!isNaN(Number(inputValue)) && inputValue !== $(`#${this.selectedRegionId}`).attr("data-track-id") ){
+        let regions = this.frames[this.getCurrentFrame()];
+        let detection = regions.find((detection) => detection.unique_dom_id === this.selectedRegionId);
+        detection.name = inputValue;
+        $(`#${this.selectedRegionId}`).attr("data-track-id", inputValue);
+        document.getElementById(`${this.selectedRegionId}-region-label`).innerHTML = inputValue;
+        this.setRegionNameLabel(document.getElementById(this.selectedRegionId), document.getElementById(`${this.selectedRegionId}-region-label`))
+      }
+      this.regionTextInput.blur();
+      this.regionLabelDiv.style.display = 'none';
     },
     /**
        * @method cleanSelectedElements
@@ -621,7 +660,7 @@
 
                   this.addDivToRegion(x1 + (isNaN(xOffset) ? 0 : xOffset), y1 + (isNaN(yOffset) ? 0 : yOffset), 
                                       x2 + (isNaN(xOffset) ? 0 : xOffset), y2 + (isNaN(yOffset) ? 0 : yOffset), 
-                                      region.name, region.tags); //add frame
+                                      region.name, region.tags, region.unique_dom_id); //add frame
                   //Only 1 region - select it and show tags
                   if (regions.length === 1) {
                       this.regionSelected(region.name);
@@ -672,6 +711,7 @@
     clearFrameElements: function() {
       //Clear divs
       $(this.videoWrapper).children(".regionCanvas").remove();
+      $(this.videoWrapper).children(".regionLabelDiv").remove();
       //reset tag buttons to not selected
       this.optionalTags.resetSelected();
       //hide region number
@@ -1004,7 +1044,7 @@
 
             this.showAllRegions();
     },
-    displayVideoTime: function() {
+    displayVideoTime: function() { // Todo: Nothing
             var currentTime = Math.round(this.video.currentTime);
             var remainingtTime = Math.round(this.video.duration - this.video.currentTime);
             //Format using moment.js
@@ -1012,7 +1052,7 @@
             remainingtTime = moment().startOf('day').seconds(remainingtTime).format('HH:mm:ss');
             this.timeSpan.innerHTML = currentTime + "  /  " + remainingtTime;
     },
-    updateSeekBar: function() {
+    updateSeekBar: function() { // Todo: Nothing
             this.seekBar.value = this.video.currentTime;
             var perc =  100 * this.seekBar.value / this.seekBar.max;
             this.seekStyle.textContent =  '.seek::-webkit-slider-runnable-track{background-size:'+perc+'% 100%}';

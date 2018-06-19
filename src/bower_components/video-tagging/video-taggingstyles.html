@@ -85,7 +85,39 @@
             font-family: "Arial";
             display: block;
             opacity:.90;
-            width:40px;height:20px;
+            width:40px;
+            height:20px;
+        }
+
+        .regionLabelDiv{
+          background:rgb(59,56,56);
+          position:absolute;
+          z-index:50000;
+          color:white;
+          font-family: "Arial";
+          display: block;
+          opacity:.90;
+          height:20px;
+          padding:0 5px;
+          display: inline-block;
+
+        }
+
+        #regionTextInput {
+          background:rgb(59,56,56);
+          position:absolute;
+          z-index:60000;
+          color:white;
+          font-family: "Arial";
+          display: block;
+          opacity: 1;
+          width:40px;
+          height:20px;
+        }
+
+        .regionLabel.regionTextInput {
+          z-index: 60000;
+          opacity: 1;
         }
 
         .regionLabelSpan{

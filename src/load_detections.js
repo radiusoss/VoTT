@@ -1,5 +1,6 @@
 const ndjson = require('ndjson');
 const fs = require('fs');
+const uuidv4 = require('uuid/v4');
 
 // Pulled from default width of new window in main.js
 const defaultWidth = 800;
@@ -63,6 +64,7 @@ function convertToVottFormat(detection) {
     "type": "Rectangle",
     "tags": [detection.labels],
     "name": Math.trunc(detection.det_id),
+    "unique_dom_id": uuidv4(),
   }
 }
 
