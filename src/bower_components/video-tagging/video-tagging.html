@@ -370,9 +370,9 @@
         var yOffset = parseFloat(this.overlay.style.top);
         this.addDivToRegion(x1 + (isNaN(xOffset) ? 0 : xOffset), y1 + (isNaN(yOffset) ? 0 : yOffset), 
                             x2 + (isNaN(xOffset) ? 0 : xOffset), y2 + (isNaN(yOffset) ? 0 : yOffset), 
-                            region.name, region.tags); //add frame
+                            region.name, region.tags, region.unique_dom_id); //add frame
         this.updateRegionZIndices();//update region z indecies
-        this.regionSelected(region.name);//Select it by default
+        this.regionSelected(region.unique_dom_id);//Select it by default
         //if there is only one tag enable it  by default
         if ($(`#${this.optionalTags.id}`).find('.tagButtons').size() == 1){
             $(`#${this.optionalTags.id}`).find('.tagButtons')[0].click();
@@ -395,7 +395,7 @@
         this.emitRegionToHost();//Persist
     },
     addTagsToRegion: function(selectedTagsArray) {
-          var regionId = this.selectedRegionId -1;//Revert to zero-based array
+          var regionId = this.selectedRegionId;
           var region = this.frames[this.getCurrentFrame()][regionId];
           for (var i = 0; i < selectedTagsArray.length; i++) {
                region.tags.push(selectedTagsArray[i]);
@@ -677,12 +677,14 @@
        */
     addRegion: function(x1, y1, x2, y2) {
             this.resetEmptyFrame();//Clear empty frame logic
+            const date = new Date();
             var region = {};
+            region.unique_dom_id = date.toISOString();
             region.x1 = x1;
             region.y1 = y1;
             region.x2 = x2;
             region.y2 = y2;
-            region.id = this.uniqueTagId++;
+            region.id = this.getCurrentFrame();
             region.width = parseFloat(this.overlay.width); //ensures pass by value
             region.height = $('#vid').height();
             region.type = this.regiontype;
