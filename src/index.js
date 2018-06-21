@@ -245,9 +245,11 @@ async function openPath(pathName, isDir) {
         if (config) {
           videotagging.inputframes = config.frames;
           visitedFrames = new Set(config.visitedFrames);
+          videotagging.currentId = config.currentId;
         } else {
           videotagging.inputframes = {};
            visitedFrames =  (isDir) ? new Set([0]) : new Set();
+          videotagging.currentId = 0;
         } 
 
         videotagging.src = ''; // ensures reload if user opens same video 
@@ -343,6 +345,7 @@ function save() {
       "suggestiontype": $('#suggestiontype').val(),
       "scd": document.getElementById("scd").checked,
       "visitedFrames": Array.from(visitedFrames),
+      "currentId": videotagging.currentId,
     };
     //if nothing changed don't save
     if (saveState === JSON.stringify(saveObject) ) {

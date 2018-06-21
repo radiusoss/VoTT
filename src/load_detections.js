@@ -31,12 +31,14 @@ function promisfiedReadStream(path) {
         frames: {},
         inputTags: new Set(),
         framerate: "30",
+        currentId: 0,
       };
       const detectionStream = fs.createReadStream(`${path}.json`).pipe(ndjson.parse());
       detectionStream.on('data', function(obj) {
         config.frames[Math.trunc(obj.frame_num)] = config.frames[Math.trunc(obj.frame_num)] || [];
         config.frames[Math.trunc(obj.frame_num)].push(convertToVottFormat(obj));
         config.inputTags.add(obj.labels);
+        config.currentId = Math.max(config.currentId, Math.trunc(obj.det_id));
       });
       detectionStream.on('end', () => {
         config.inputTags = Array.from(config.inputTags).join();

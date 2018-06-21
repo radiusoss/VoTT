@@ -106,6 +106,7 @@
       imagelist: Object,
       inputtagsarray:Object,
       inputframes: Object,
+      currentId: Number,
       src: {
         type: String,
         value: '',
@@ -395,8 +396,8 @@
         this.emitRegionToHost();//Persist
     },
     addTagsToRegion: function(selectedTagsArray) {
-          var regionId = this.selectedRegionId;
-          var region = this.frames[this.getCurrentFrame()][regionId];
+          const regions = this.frames[this.getCurrentFrame()];
+          const region = regions.find((detection) => detection.unique_dom_id === this.selectedRegionId);
           for (var i = 0; i < selectedTagsArray.length; i++) {
                region.tags.push(selectedTagsArray[i]);
           }
@@ -603,12 +604,13 @@
         let regions = this.frames[this.getCurrentFrame()];
         let detection = regions.find((detection) => detection.unique_dom_id === this.selectedRegionId);
         detection.name = inputValue;
-        $(`#${this.selectedRegionId}`).attr("data-track-id", inputValue);
+        document.getElementById(`${this.selectedRegionId}`).setAttribute("data-track-id", inputValue);
         document.getElementById(`${this.selectedRegionId}-region-label`).innerHTML = inputValue;
         this.setRegionNameLabel(document.getElementById(this.selectedRegionId), document.getElementById(`${this.selectedRegionId}-region-label`))
       }
       this.regionTextInput.blur();
       this.regionLabelDiv.style.display = 'none';
+      this.cleanSelectedElements();
     },
     /**
        * @method cleanSelectedElements
@@ -679,7 +681,9 @@
             this.resetEmptyFrame();//Clear empty frame logic
             const date = new Date();
             var region = {};
-            region.unique_dom_id = date.toISOString();
+            // Regex from https://stackoverflow.com/questions/4328500/how-can-i-strip-all-punctuation-from-a-string-in-javascript-using-regex
+            // to remove special characters from ISOstring causing issues with JQuery selector
+            region.unique_dom_id = date.toISOString().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
             region.x1 = x1;
             region.y1 = y1;
             region.x2 = x2;
@@ -693,12 +697,12 @@
             var regions = this.frames[frameIndex];
             //The array is populated and can contain multiple regions
             if(this.multiregions == 1 && regions) {
-                region.name = regions.length + 1;
+                region.name = this.currentId++;
                 this.frames[frameIndex].push(region);
             }
             else {//Only one region allowed
                 this.clearFrameElements();
-                region.name = 1;
+                region.name = this.currentId++;
                 this.frames[frameIndex] = [];
                 this.frames[frameIndex].push(region);
             }
@@ -1002,6 +1006,7 @@
     },
     videoClicked: function(e) {
             this.cleanSelectedElements();
+            this.regionLabelDiv.style.display = "none";
             if(!((this.regiontype.toLowerCase() === "square") || (this.regiontype.toLowerCase() === "rectangle")))
             {
                 var rect = this.overlay.getBoundingClientRect();
