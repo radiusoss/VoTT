@@ -41,3 +41,6 @@ jspm_packages
 
 #Intellij Settings
 .idea
+
+#Dist Folder
+/dist

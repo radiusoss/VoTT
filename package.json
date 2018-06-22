@@ -1,10 +1,20 @@
 {
   "name": "vott",
+  "productName": "Radius VoTT",
   "version": "1.0.0",
   "description": "An electron app for building end to end Object Detection Models with CNTK from Sample Videos.",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "distwin": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.radiusAI.radiusvott",
+    "win": {
+      "target": "NSIS"
+    }
   },
   "repository": "https://github.com/CatalystCode/VOTT",
   "keywords": [
@@ -14,15 +24,16 @@
     "Object-Detection"
   ],
   "readme": "README.md",
-  "author": "aribornstein",
+  "author": "pmillssf",
   "license": "MIT",
   "devDependencies": {
-    "bower": "^1.7.2"
+    "bower": "^1.7.2",
+    "electron-builder": "^20.15.1",
+    "electron": "^1.4.1"
   },
   "dependencies": {
     "async": "^2.1.5",
     "cntk-fastercnn": "^0.1.2",
-    "electron": "^1.4.1",
     "electron-window-state": "^4.0.2",
     "ndjson": "^1.5.0",
     "remote": "^0.2.6",
