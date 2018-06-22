@@ -469,15 +469,17 @@
                  region.x2 = region.x1 + parseInt(div.style.width);
                  region.y2 = region.y1 + parseInt(div.style.height);
              }
+             var self = this;
               //make region  draggable
               $('#'+divId).draggable({
                   stop: function(event, ui) {
                      updateRegionFromDiv(this,parseFloat(self.overlay.style.left), parseFloat(self.overlay.style.top));
+                     self.updateLabels()
                   },
                   containment: $("#overlay")[0]
               });
               //make region resizable
-               var self = this;
+
                $('#'+divId).resizable({
                    stop: function(event, ui) {
                        $('.regionCanvas').sort(function (e1, e2) {
@@ -485,6 +487,7 @@
                        }).each(function(idx,e) {
                          e.style.zIndex =(idx+200).toString();
                        });
+                     self.updateLabels();
                    },
                    containment: $("#overlay")[0],
                    handles: 'all'
@@ -597,6 +600,12 @@
         this.regionTextInput.select();
         this.regionLabelDiv.style.display = "inline-block";
       }
+    },
+    updateLabels: function(){
+      const div = document.getElementById(this.selectedRegionId);
+      const divLabel = document.getElementById(`${this.selectedRegionId}-region-label`);
+      this.setRegionNameLabel(div, divLabel);
+      this.positionRegionNameLabel(div);
     },
     updateRegionId: function() {
       const inputValue = this.regionTextInput.value;
