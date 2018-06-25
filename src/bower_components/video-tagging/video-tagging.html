@@ -272,8 +272,8 @@
               this.regionSelected(selected_region)
       });
       this.addEventListener("ontagdeleted", function(e) {
-              var regionId = this.selectedRegionId -1;//Revert to zero-based array
-              var region = this.frames[this.getCurrentFrame()][regionId];
+              const regions = this.frames[this.getCurrentFrame()];
+              const region = regions.find((detection) => detection.unique_dom_id === this.selectedRegionId);
               for(var index = 0;index < region.tags.length;index++){
                     if(region.tags[index] === e.detail.tagid){
                         region.tags.splice(index, 1);
