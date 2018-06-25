@@ -270,7 +270,7 @@
               selected_region = this.selectedRegionId
               this.showAllRegions();
               this.regionSelected(selected_region)
-          });
+      });
       this.addEventListener("ontagdeleted", function(e) {
               var regionId = this.selectedRegionId -1;//Revert to zero-based array
               var region = this.frames[this.getCurrentFrame()][regionId];
@@ -674,7 +674,7 @@
                                       region.name, region.tags, region.unique_dom_id); //add frame
                   //Only 1 region - select it and show tags
                   if (regions.length === 1) {
-                      this.regionSelected(region.name);
+                      this.regionSelected(region.unique_dom_id);
                   }
                   this.updateRegionZIndices();
               }

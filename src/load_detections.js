@@ -7,7 +7,6 @@ const defaultWidth = 800;
 const defaultHeight = 600;
 
 function loadDetections(path) {
-  console.log('attempting to load detections');
   //remove .m4v extension
   path = path.slice(0, -4);
   let config;
@@ -33,7 +32,13 @@ function promisfiedReadStream(path) {
         framerate: "30",
         currentId: 0,
       };
-      const detectionStream = fs.createReadStream(`${path}.json`).pipe(ndjson.parse());
+      const detectionStream = fs.createReadStream(`${path}.json`);
+
+      detectionStream.on('error', (error) => {
+        console.log(error);
+        reject(error);
+      });
+      detectionStream.pipe(ndjson.parse());
       detectionStream.on('data', function(obj) {
         config.frames[Math.trunc(obj.frame_num)] = config.frames[Math.trunc(obj.frame_num)] || [];
         config.frames[Math.trunc(obj.frame_num)].push(convertToVottFormat(obj));
@@ -44,12 +49,9 @@ function promisfiedReadStream(path) {
         config.inputTags = Array.from(config.inputTags).join();
         resolve(config);
       });
-      detectionStream.on('error', (error) => {
-        reject(error);
-      })
     }
-    catch (error){
-      reject(error);
+    catch (err){
+      reject(err);
     }
   });
 }
@@ -75,8 +77,8 @@ async function readNDJSON(path) {
   try {
     config = await promisfiedReadStream(path);
   }
-  catch (error) {
-    throw error;
+  catch (err) {
+    throw err;
   }
   return config;
 }
