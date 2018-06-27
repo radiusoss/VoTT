@@ -13,7 +13,8 @@ var saveState,
     videotagging,
     detection,
     trackingExtension,
-    assetFolder;
+    assetFolder,
+    saveLock;
 
 $(document).ready(() => {//init confirm keys figure out why this doesn't work
   $('#inputtags').tagsinput({confirmKeys: [13, 32, 44, 45, 46, 59, 188]});
@@ -352,7 +353,6 @@ function save() {
       return;
     }
 
-    var saveLock;
     if (!saveLock){
            saveLock = true;
            fs.writeFile(`${videotagging.src}.json`, JSON.stringify(saveObject),()=>{
@@ -360,6 +360,8 @@ function save() {
              console.log("saved");
            });
            setTimeout(()=>{saveLock=false;}, 500);
-    } 
+    } else {
+        alert(`Save lock still in effect, ${videotagging.src}.json save failed, try again in a second`)
+    }
 
 }
